@@ -1,14 +1,14 @@
 @extends('layouts.app_admin')
 
-@section('title', 'Tambah Kamar')
+@section('title', 'Tambah fasilitas')
 
 @section('content')
 <div class="ml-60">
-    <h2 class="text-2xl font-bold mb-4">Tambah Kamar</h2>
+    <h2 class="text-2xl font-bold mb-4">Tambah fasilitas</h2>
     <form action="{{ route('admin.fasilitas.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
         <div class="mb-4">
-            <label>Nama Kamar</label>
+            <label>Nama fasilitas</label>
             <input type="text" name="name" class="w-full border p-2 rounded" required>
         </div>
 

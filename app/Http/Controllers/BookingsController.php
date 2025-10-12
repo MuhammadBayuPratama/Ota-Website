@@ -8,6 +8,7 @@ use App\Models\Addon;
 use App\Models\Fasilitas;
 use App\Models\BookingFasilitas;
 use App\Models\Detail_Booking;
+use App\Models\detail_fasilitas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -57,23 +58,26 @@ public function create(Request $request)
     $kamars = Kamar::all(); // ← tambah ini
     $addons = Addon::all(); // Pastikan Addon::all() mengembalikan data
     $selectedKamar = $request->query('kamar_id') ? Kamar::find($request->query('kamar_id')) : null;
-    $selectedFasilitas = $request->query('fasilitas_id') ? Fasilitas::find($request->query('fasilitas_id')) : null;
 
     return view('user.booking_form', compact('kamars', 'selectedKamar','addons'));
 }
+
+
+
 public function createfasilitas(Request $request)
 {
     // Mengambil semua data Fasilitas utama
-    $fasilitas = fasilitas::all();
+    $facilities = Fasilitas::all();
     
     // Mengambil data Add-ons
     $addons = Addon::all();
     
-    // Mengambil Fasilitas yang dipilih dari parameter URL 'fasilitas_id'
-    $selectedFasilitas = $request->query('fasilitas_id') ? Fasilitas::find($request->query('fasilitas_id')) : null;
+    // Mengambil Fasilitas yang dipilih dari parameter URL 'facility_id'
+    // PERBAIKAN: Menggunakan 'facility_id' sesuai URL
+    $selectedfasilitas = $request->query('facility_id') ? Fasilitas::find($request->query('facility_id')) : null;
 
     // Mengirimkan data ke view 'user.booking_fasilitas'
-    return view('user.booking_fasilitas', compact('fasilitas', 'selectedFasilitas', 'addons'));
+    return view('user.booking_fasilitas', compact('facilities', 'selectedfasilitas', 'addons'));
 }
 
 
@@ -211,16 +215,17 @@ public function storefasilitas(Request $request)
     // 2. Validasi Input
     try {
         $validated = $request->validate([
-            'fasilitas_ids'       => 'required|array|min:1',
-            'fasilitas_ids.*'     => 'exists:fasilitas,id',
-            'Nama_Tamu'       => 'required|string|max:255',
-            'arrival_time'    => 'required|date_format:H:i',
-            'check_in'        => 'required|date|after_or_equal:today',
-            'check_out'       => 'required|date|after:check_in',
-            'Phone'           => 'required|string',
-            'Special_Request' => 'nullable|string',
-            'addons'          => 'nullable|array',
-            'addons.*'        => 'exists:addons,id',
+            // Tidak perlu diubah, karena input form masih 'fasilitas_ids'
+            'fasilitas_ids'     => 'required|array|min:1',
+            'fasilitas_ids.*'   => 'exists:fasilitas,id',
+            'Nama_Tamu'         => 'required|string|max:255',
+            'arrival_time'      => 'required|date_format:H:i',
+            'check_in'          => 'required|date|after_or_equal:today',
+            'check_out'         => 'required|date|after:check_in',
+            'Phone'             => 'required|string',
+            'Special_Request'   => 'nullable|string',
+            'addons'            => 'nullable|array',
+            'addons.*'          => 'exists:addons,id',
         ]);
     } catch (ValidationException $e) {
         return back()->withErrors($e->errors())->withInput();
@@ -231,42 +236,24 @@ public function storefasilitas(Request $request)
     $durasi = max(1, $durasi); // Minimal 1 hari
     
     $total_harga = 0;
-    $kamarDetailData = []; 
+    $fasilitasDetailData = []; 
     $addonsToAttach = []; 
 
     // 3. Pengecekan Ketersediaan dan Perhitungan Harga Kamar
     foreach (array_unique($validated['fasilitas_ids']) as $fasilitasId) {
         
-        // Logika Pengecekan Overlap: Mencari kamar yang dipesan di Detail_Booking
-        $overlap = Detail_Booking::where('fasilitas_id', $fasilitasId)
-            ->whereHas('booking', function ($q) use ($validated) {
-                $q->whereIn('status', ['diproses','checkin'])
-                  ->where(function($q_inner) use ($validated) {
-                      // Logika standar cek tumpang tindih tanggal
-                      $q_inner->where('check_in', '<', $validated['check_out'])
-                              ->where('check_out', '>', $validated['check_in']);
-                  });
-            })
-            ->exists();
-
-        if ($overlap) {
-            $fasilitasName = fasilitas::find($fasilitasId)->name ?? 'fasilitas #'.$fasilitasId;
-            return back()->with('error', 'fasilitas '.$fasilitasName.' sudah dibooking pada tanggal tersebut.')->withInput();
-        }
-
-        // Siapkan data untuk Detail_Booking
-        $fasilitas = fasilitas::findOrFail($fasilitasId);
+        $fasilitas = Fasilitas::findOrFail($fasilitasId);
         $hargafasilitas = $fasilitas->price * $durasi;
         $total_harga += $hargafasilitas;
         
-        // *** PERUBAHAN DI SINI ***
-        // Menambahkan data 'dewasa' dan 'anak' dari model Kamar
-        $kamarDetailData[] = [
-            'fasilitas_id'          => $fasilitasId,
+        // Data untuk Detail Fasilitas
+        $fasilitasDetailData[] = [
+            'fasilitas_id'      => $fasilitasId,
             'Nama_Tamu'         => $validated['Nama_Tamu'],
             'durasi'            => $durasi,
-            'dewasa'            => $kamar->max_adults ?? 0, // Ambil dari kamar
-            'anak'              => $kamar->max_children ?? 0,   // Ambil dari kamar
+            'dewasa'            => $fasilitas->max_adults ?? 1, 
+            'anak'              => $fasilitas->max_children ?? 0, 
+            'Special Request'   => $validated['Special_Request'],
         ];
     }
 
@@ -275,13 +262,13 @@ public function storefasilitas(Request $request)
         foreach (array_unique($validated['addons']) as $addon_id) {
             $addon = Addon::findOrFail($addon_id);
             $total_harga += $addon->price; 
-            // Siapkan data untuk attach: key=addon_id, value=array pivot data (quantity)
             $addonsToAttach[$addon->id] = ['quantity' => 1]; 
         }
     }
     
     // 5. Buat Entitas Booking Utama
-    $booking = Booking::create([
+    // Tambahkan baris 'Email' ke list fillable di model BookingFasilitas.php
+    $booking = BookingFasilitas::create([
         'user_id'      => Auth::id(),
         'Email'        => Auth::user()->email,
         'Phone'        => $validated['Phone'],
@@ -294,16 +281,12 @@ public function storefasilitas(Request $request)
     ]);
 
     // 6. Simpan Detail Booking (Kamar)
-    foreach ($kamarDetailData as $detailData) {
-        Detail_Booking::create(array_merge($detailData, [
-            'booking_id'        => $booking->id,
-            'special_request'   => $validated['Special_Request'],
-        ]));
+    foreach ($fasilitasDetailData as $detailData) {
+        $booking->detailFasilitas()->create($detailData);
     }
-
+    
     // 7. Attach Add-ons menggunakan Relasi Many-to-Many
     if (!empty($addonsToAttach)) {
-        // Memanggil relasi addons() yang ada di Model Booking
         $booking->addons()->attach($addonsToAttach);
     }
 
@@ -318,7 +301,6 @@ public function storefasilitas(Request $request)
         ? response()->json(['success'=>true,'message'=>$msg,'data'=>$booking], 201)
         : redirect()->route('booking.history')->with('success',$msg);
 }
-
     /**
      * Cancel booking kamar.
      */

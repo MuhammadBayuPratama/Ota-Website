@@ -33,7 +33,7 @@ Route::get('/fasilitas', [FasilitasController::class, 'fasilitas'])->name('fasil
 // ================= USER =================
 Route::middleware(['auth', 'role:user'])->group(function () {
     Route::get('/booking/create', [BookingsController::class, 'create'])->name('booking.create');
-    Route::get('/booking/fasilitas/create', [BookingsController::class, 'createfasilitas'])->name('bookingfasilitas.create');
+    Route::get('/booking/create/fasilitas', [BookingsController::class, 'createfasilitas'])->name('bookingfasilitas.create');
     Route::post('/booking/store', [BookingsController::class, 'store'])->name('booking.store');
     Route::post('/booking/storefasilitas', [BookingsController::class, 'storefasilitas'])->name('booking.storefasilitas');
     Route::get('/booking/history', [BookingsController::class, 'history'])->name('booking.history');

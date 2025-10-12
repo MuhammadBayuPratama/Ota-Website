@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany; // <-- ADDED
 use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
 
@@ -14,6 +15,9 @@ class BookingFasilitas extends Model
 
     protected $fillable = [
         'user_id',
+        'Email',
+        'Phone',
+        'arrival_time',
         'fasilitas_id',
         'check_in',
         'check_out',
@@ -21,8 +25,11 @@ class BookingFasilitas extends Model
         'total_harga',
         'status',
     ];
+    
+    // Ensure the correct table name if it deviates from 'booking_fasilitas'
+    // protected $table = 'booking_fasilitas';
 
-    // --- Accessor (Getter) ---
+   
 
     /**
      * Aksesor untuk mendapatkan nilai durasi dari properti check_in dan check_out.
@@ -63,6 +70,16 @@ class BookingFasilitas extends Model
     {
         // Menggunakan F besar sesuai import
         return $this->belongsTo(Fasilitas::class);
+    }
+
+    /**
+     * Relasi ke DetailFasilitas (HasMany) - BARU DITAMBAHKAN
+     * Ini adalah PENTING untuk mengatasi error 1452.
+     */
+    public function detailFasilitas(): HasMany
+    {
+        // Menghubungkan 'id' dari BookingFasilitas dengan 'booking_id' dari DetailFasilitas
+        return $this->hasMany(detail_fasilitas::class, 'booking_id');
     }
 
     // --- Local Scopes ---

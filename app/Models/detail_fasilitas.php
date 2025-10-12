@@ -4,13 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo; // Tambahkan ini
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class detail_fasilitas extends Model
+class detail_fasilitas extends Model 
 {
     use HasFactory;
 
-    protected $table = 'detail_booking';
+    protected $table = 'detail_fasilitas'; 
 
     protected $fillable = [
         'booking_id',
@@ -18,21 +18,18 @@ class detail_fasilitas extends Model
         'Nama_Tamu',
         'dewasa',
         'anak',
-        'Special Request',
+        'Special_Request',
     ];
 
-    // 1. Relasi ke Booking (Induk) - Sudah Benar
-    public function bookingfasilitas(): BelongsTo // Tambahkan tipe data kembali (opsional tapi disarankan)
+  
+    public function bookingfasilitas(): BelongsTo
     {
-        // Secara default, Laravel akan menggunakan 'booking_id'
-        return $this->belongsTo(Bookingfasilitas::class);
+        return $this->belongsTo(BookingFasilitas::class, 'booking_id');
     }
     
-    // 2. Relasi ke Kamar (Baru ditambahkan) - PENTING
+  
     public function fasilitas(): BelongsTo 
     {
-        // Secara default, Laravel akan menggunakan 'kamar_id'
-        return $this->belongsTo(fasilitas::class);
+        return $this->belongsTo(Fasilitas::class, 'fasilitas_id');
     }
-
 }

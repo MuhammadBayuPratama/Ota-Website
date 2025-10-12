@@ -7,7 +7,7 @@
     <!-- Main content -->
     <div class="flex-1 flex flex-col">
         <!-- Content -->
-        <main class="p-6 flex-1 overflow-y-auto">
+        <main class="p-6 flex-1 overflow">
             <div class="p-6">
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", function () {
             labels: @json($statusLabels),
             datasets: [{
                 data: @json($statusData),
-                backgroundColor: ['#22c55e','#3b82f6','#ef4444']
+                backgroundColor: ['#22c55e','#3b82f6','#ef4444' ,'#5C3E94' , '#BADFDB']
             }]
         }
     });

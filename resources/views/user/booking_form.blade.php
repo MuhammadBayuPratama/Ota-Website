@@ -132,7 +132,8 @@
                                     <div class="group rounded-xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden bg-white border border-gray-100">
                                         {{-- ... (Image & Info Kamar) ... --}}
                                         <div class="relative overflow-hidden">
-                                            <img src="{{ $kamar->image }}" class="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-700">
+                                    <img src="{{ asset('/' . $kamar->image) }}" 
+                                        class="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-700">                                            
                                             @if($isFull)
                                                 <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">Penuh</span>
                                             @else
@@ -302,9 +303,9 @@
                             <input type="checkbox" name="agree_terms" id="agree_terms" class="mt-1 h-5 w-5 text-blue-600 rounded" required>
                             <label for="agree_terms" class="text-sm text-gray-600">
                                 I agree to the 
-                                <a href="#" class="text-blue-600 hover:text-blue-800 underline">Terms and Conditions</a> 
+                                <a href="{{route('terms.of.service')}}" class="text-blue-600 hover:text-blue-800 underline">Terms and Conditions</a> 
                                 and 
-                                <a href="#" class="text-blue-600 hover:text-blue-800 underline">Privacy Policy</a>
+                                <a href="{{route('privacy.policy')}}" class="text-blue-600 hover:text-blue-800 underline">Privacy Policy</a>
                             </label>
                         </div>
 

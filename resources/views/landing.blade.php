@@ -104,8 +104,7 @@
     </div>
 </section>
 
-<!-- Rooms Section dengan Desain Lebih Baik -->
-<section id="rooms-section" class="py-10 bg-gradient-to-b from-white to-gray-50">
+<section id="rooms" class="py-10 bg-gradient-to-b from-white to-gray-50">
     <div class="container mx-auto px-6">
         <div class="text-center mb-12">
             <h2 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
@@ -135,19 +134,22 @@
             }" 
             class="relative w-full overflow-hidden"
         >
-            <!-- Navigation Buttons dengan Desain Lebih Baik -->
             <div class="flex justify-end space-x-3 mb-6">
                 <button 
-                    @click="active = (active - 1 + total) % total"
-                    class="bg-white text-2xl rounded-full shadow-xl w-14 h-14 flex items-center justify-center hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all duration-300 border-2 border-gray-200 hover:border-transparent group"
+                    @click="active = Math.max(0, active - 1)" 
+                    :disabled="active === 0"
+                    class="bg-white text-2xl rounded-full shadow-xl w-14 h-14 flex items-center justify-center transition-all duration-300 border-2 border-gray-200 group"
+                    :class="active === 0 ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white hover:border-transparent'"
                 >
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                     </svg>
                 </button>
                 <button 
-                    @click="active = (active + 1) % total"
-                    class="bg-white text-2xl rounded-full shadow-xl w-14 h-14 flex items-center justify-center hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all duration-300 border-2 border-gray-200 hover:border-transparent group"
+                    @click="active = Math.min(total - calculateItemsPerView(), active + 1)" 
+                    :disabled="active >= total - calculateItemsPerView()"
+                    class="bg-white text-2xl rounded-full shadow-xl w-14 h-14 flex items-center justify-center transition-all duration-300 border-2 border-gray-200 group"
+                    :class="active >= total - calculateItemsPerView() ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white hover:border-transparent'"
                 >
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -161,118 +163,110 @@
                 :style="`transform: translateX(-${active * itemWidth}px);`"
                 id="rooms-container"
             >
-                @foreach($kamars as $kamar)
+                @foreach($kamars as $index => $kamar)
                     @php
                         $activeDetailBookings = $kamar->detailBookings()->whereHas('booking', function ($query) { 
                             $query->whereIn('status', ['diproses', 'checkin']);
                         })->count();
                         $isFull = $activeDetailBookings >= $kamar->jumlah; 
+                        $availableCount = $kamar->jumlah - $activeDetailBookings;
                     @endphp
 
-                    <div class="room-card px-3 flex-shrink-0 min-w-full md:min-w-[50%] lg:min-w-[33.3333%]" 
-                         data-status="{{ $isFull ? 'full' : 'available' }}"
-                         data-price="{{ $kamar->price }}">
-                        <div class="rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden bg-white h-full flex flex-col border border-gray-100">
+                    <div class="room-card px-3 flex-shrink-0 min-w-full md:min-w-[50%] lg:min-w-[33.333%]" 
+                          data-status="{{ $isFull ? 'full' : 'available' }}"
+                          data-price="{{ $kamar->price }}"
+                          :style="`width: ${itemWidth}px;`">
+                        <div class="rounded-xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 overflow-hidden bg-white h-full flex flex-col border border-gray-100">
+                            
                             <div class="relative overflow-hidden group">
-                                <img src="{{ $kamar->image }}" class="w-full h-72 object-cover transition-transform duration-700 group-hover:scale-110">
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <img src="{{ $kamar->image }}" class="w-full h-72 object-cover transition-transform duration-500 group-hover:scale-105">
                                 
+                                <div class="absolute inset-0 bg-black/10"></div>
+
                                 @if($isFull)
-                                    <span class="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-bold px-4 py-2 rounded-full animate-pulse shadow-lg flex items-center gap-2">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                                        </svg>
+                                    <span class="absolute top-4 left-4 bg-red-600 text-white text-sm font-semibold px-3 py-1 rounded-full flex items-center gap-1 shadow">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
                                         Penuh
                                     </span>
                                 @else
-                                    <span class="absolute top-4 left-4 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                        </svg>
+                                    <span class="absolute top-4 left-4 bg-green-600 text-white text-sm font-semibold px-3 py-1 rounded-full flex items-center gap-1 shadow">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
                                         Tersedia
                                     </span>
                                 @endif
 
-                                <!-- Availability Badge -->
-                                <div class="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-gray-700">
-                                    {{ $kamar->jumlah - $activeDetailBookings }}/{{ $kamar->jumlah }} Kamar
+                                <div class="absolute bottom-4 left-4 bg-black/50 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
+                                    {{ $availableCount }}/{{ $kamar->jumlah }} Kamar
                                 </div>
+                                
                             </div>
 
                             <div class="p-6 flex-grow flex flex-col">
-                                <h3 class="text-2xl font-bold mb-3 text-gray-900">{{ $kamar->name }}</h3>
+                                <h3 class="text-2xl font-extrabold mb-1 text-gray-900">{{ $kamar->name }}</h3>
+                                <p class="text-gray-500 text-sm mb-3">
+                                    {{ $kamar->category_name ?? 'Kamar' }} 
+                                </p>
+                                
                                 <p class="text-gray-600 mb-4 line-clamp-3 flex-grow leading-relaxed">{{ $kamar->description }}</p>
                                 
-                                <!-- Features Icons -->
-                                <div class="flex gap-3 mb-4 text-gray-500 text-sm">
+                                <div class="flex gap-x-4 gap-y-2 flex-wrap mb-4 text-gray-500 text-sm">
                                     <span class="flex items-center gap-1">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                                        </svg>
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 10.14l-.01 2.36.01 2.5a2 2 0 01-2 2H7a2 2 0 01-2-2v-4a2 2 0 012-2h8.04L15 8h-4V4H7v4H5a2 2 0 00-2 2v8a2 2 0 002 2h14a2 2 0 002-2V10.14zM16 4h4v4h-4zM7 16h4v-4H7z"></path></svg>
                                         AC
                                     </span>
                                     <span class="flex items-center gap-1">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
-                                        </svg>
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-6h2v6zm0-8H11V6h2v4z"></path></svg>
                                         WiFi
                                     </span>
                                     <span class="flex items-center gap-1">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"></path></svg>
                                         TV
                                     </span>
                                 </div>
 
                                 <div class="border-t pt-4 mt-auto">
-                                    <p class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 font-extrabold text-3xl mb-4">
-                                        Rp {{ number_format($kamar->price, 0, ',', '.') }}
+                                    <p class="font-bold text-gray-900 mb-4">
+                                        <span class="text-4xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 font-extrabold">
+                                            Rp {{ number_format($kamar->price, 0, ',', '.') }}
+                                        </span>
                                         <span class="text-sm text-gray-500 font-normal">/malam</span>
                                     </p>
 
                                     @auth
                                         @if($isFull)
-                                            <button disabled class="w-full bg-gray-300 text-gray-500 py-3 rounded-xl cursor-not-allowed font-semibold flex items-center justify-center gap-2">
-                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
-                                                </svg>
+                                            <button disabled class="w-full bg-gray-300 text-gray-500 py-3 rounded-lg cursor-not-allowed font-semibold flex items-center justify-center gap-2">
+                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
                                                 Tidak Tersedia
                                             </button>
                                         @else
                                             <a href="{{ route('booking.create', ['kamar_id' => $kamar->id]) }}" 
-                                               class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl text-center hover:shadow-xl transition-all duration-300 font-bold hover:scale-[1.02] flex items-center justify-center gap-2">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                                </svg>
+                                               class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg text-center hover:shadow-lg transition-all duration-300 font-bold hover:scale-[1.01] flex items-center justify-center gap-2">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                 Booking Sekarang
                                             </a>
                                         @endif
                                     @else
                                         <a href="{{ route('login') }}" 
-                                           class="block w-full bg-gradient-to-r from-gray-600 to-gray-700 text-white py-3 rounded-xl text-center hover:from-gray-700 hover:to-gray-800 font-bold transition-all duration-300 flex items-center justify-center gap-2">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                                            </svg>
+                                           class="block w-full bg-gradient-to-r from-gray-600 to-gray-700 text-white py-3 rounded-lg text-center hover:from-gray-700 hover:to-gray-800 font-bold transition-all duration-300 flex items-center justify-center gap-2">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
                                             Login untuk Booking
                                         </a>
                                     @endauth
                                 </div>
                             </div>
                         </div>
-                    </div>
+                        </div>
                 @endforeach
             </div>
 
-            <!-- Dots Navigation dengan Desain Lebih Baik -->
             <div class="flex justify-center space-x-3 mt-8">
-                @foreach($kamars as $index => $kamar)
+                <template x-for="(kamar, index) in Array.from({ length: total - calculateItemsPerView() + 1 }, (_, i) => i)" :key="index">
                     <button 
                         class="w-3 h-3 rounded-full transition-all duration-300 hover:scale-125"
-                        :class="active === {{ $index }} ? 'bg-gradient-to-r from-blue-600 to-purple-600 w-8' : 'bg-gray-300'"
-                        @click="active = {{ $index }}">
+                        :class="active === index ? 'bg-gradient-to-r from-blue-600 to-purple-600 w-8' : 'bg-gray-300'"
+                        @click="active = index">
                     </button>
-                @endforeach
+                </template>
             </div>
         </div>
 
@@ -404,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </section>
 
-<section id="facilities-section" class="py-10 bg-gradient-to-b from-white to-gray-50">
+<section id="facilities" class="py-10 bg-gradient-to-b from-white to-gray-50">
     <div class="container mx-auto px-6">
         <div class="text-center mb-12">
             <h2 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
@@ -460,11 +454,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 id="rooms-container"
             >
                 @foreach($facilities as $facility)
-      
-
-                    <div class="room-card px-3 flex-shrink-0 min-w-full md:min-w-[50%] lg:min-w-[33.3333%]" 
+              @php
+                // ✅ CORRECTED LINE: Call the relationship method on the single $facility model
+                $activeDetailBookings = $facility->detailfasilitas()
+                    ->whereHas('bookingfasilitas', function ($query) { 
+                        $query->whereIn('status', ['diproses', 'checkin']);
+                    })
+                    ->count();
+                    
+                // Also ensure you use $facility for the attributes inside the loop
+                $isFull = $activeDetailBookings >= $facility->jumlah; 
+                $availableCount = $facility->jumlah - $activeDetailBookings;
+                @endphp
+                    <div class="facilities-card px-3 flex-shrink-0 min-w-full md:min-w-[50%] lg:min-w-[33.3333%]" 
                          data-status="{{ $isFull ? 'full' : 'available' }}"
-                         data-price="{{ $facility->price }}"> {{-- Menggunakan $facility->price --}}
+                         data-price="{{ $facility->price }}">
                         <div class="rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden bg-white h-full flex flex-col border border-gray-100">
                             <div class="relative overflow-hidden group">
                                 <img src="{{ $facility->image }}" class="w-full h-72 object-cover transition-transform duration-700 group-hover:scale-110">
@@ -512,8 +516,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                                 <div class="border-t pt-4 mt-auto">
                                     <p class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 font-extrabold text-3xl mb-4">
-                                        Rp {{ number_format($facility->price, 0, ',', '.') }} {{-- Menggunakan $facility->price --}}
-                                        <span class="text-sm text-gray-500 font-normal">/jam</span> {{-- Sesuaikan satuan harga --}}
+                                        Rp {{ number_format($facility->price, 0, ',', '.') }} 
+                                        <span class="text-sm text-gray-500 font-normal">/hari</span> 
                                     </p>
 
                                     @auth
@@ -525,8 +529,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 Tidak Tersedia
                                             </button>
                                         @else
-                                            {{-- Ganti 'kamar_id' menjadi 'facility_id' dan route booking --}}
-                                            <a href="{{ route('booking.create', ['facility_id' => $facility->id]) }}" 
+                                            <a href="{{ route('bookingfasilitas.create', ['facility_id' => $facility->id]) }}" 
                                                class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl text-center hover:shadow-xl transition-all duration-300 font-bold hover:scale-[1.02] flex items-center justify-center gap-2">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>

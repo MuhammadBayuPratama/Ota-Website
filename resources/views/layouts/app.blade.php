@@ -21,7 +21,7 @@
 
     <!-- Logo -->
     <div class="flex items-center space-x-2">
-        <img src="pointer.png" alt="pointer" class="w-8 h-8 rounded-full">
+        <img src="{{ asset('pointer.png') }}" alt="pointer" class="w-8 h-8 rounded-full">
         <span class="text-white font-bold text-lg">Pointer Hotel</span>
     </div>
 
