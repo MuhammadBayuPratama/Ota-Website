@@ -12,6 +12,7 @@ use App\Models\detail_fasilitas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log; // Tambahkan ini di bagian atas file
 
 class BookingsController extends Controller
 {
@@ -334,18 +335,11 @@ public function storefasilitas(Request $request)
     /**
      * Booking history.
      */
-// App/Http/Controllers/BookingController.php
-
 public function history()
 {
     $userId = Auth::id();
-    
-    // 🛑 PERBAIKAN UTAMA DI SINI
-    // Mengganti relasi yang tidak terdefinisi ('kamar')
-    // dengan relasi bertingkat yang benar: 'detailBookings' (di Model Booking) 
-    // lalu 'kamar' (di Model DetailBooking).
     $bookingsKamar = Booking::where('user_id', $userId)
-                             ->with('detailBookings.kamar') // FIX: Menggunakan relasi bertingkat
+                             ->with('detailBookings.kamar') 
                              ->orderBy('created_at', 'desc')
                              ->get();
                              
@@ -357,7 +351,52 @@ public function history()
     return view('user.booking_history', compact('bookingsKamar', 'bookingsFasilitas'));
 }
 
+/**
+ * Menampilkan detail booking universal (Kamar atau Fasilitas).
+ * @param string $type Tipe booking ('kamar' atau 'fasilitas')
+ * @param int $id ID dari booking yang dicari
+ */
+public function showDetail($type, $id)
+{
+    // 1. NORMALISASI TYPE
+    $type = strtolower($type); 
+    
+    $userId = Auth::id();
+    $bookingKamar = null;
+    $bookingFasilitas = null; // $bookingFasilitas diinisialisasi sebagai null
+    $typeLabel = null;
+    $dataFound = false;
 
+    if ($type === 'kamar') {
+        // Mengambil Booking Kamar dengan relasi detailnya
+        $bookingKamar = Booking::with('detailBookings.kamar')
+            ->where('user_id', $userId)
+            ->findOrFail($id);
+        $typeLabel = 'Kamar';
+        $dataFound = true;
+
+    } elseif ($type === 'fasilitas') {
+        // MENGAMBIL BOOKING FASILITAS DENGAN RELASI NESTED: detailFasilitas -> fasilitas
+        $bookingFasilitas = BookingFasilitas::with('detailFasilitas.fasilitas') // <--- PERUBAHAN KRUSIAL
+            ->where('user_id', $userId)
+            ->findOrFail($id);
+        $typeLabel = 'Fasilitas';
+        $dataFound = true;
+
+    } else {
+        abort(404, 'Tipe booking tidak valid.');
+    }
+
+    // 2. PENGECEKAN KEBERADAAN (Safety Check) - findOrFail sudah menangani sebagian besar kasus.
+    // ... (Logika pengecekan tetap sama) ...
+    // Di Laravel, findOrFail akan menghentikan eksekusi jika tidak ditemukan, 
+    // sehingga pengecekan dataFound di sini adalah opsional.
+    
+    // Mengirim kedua objek booking ke view tunggal
+    return view('user.booking_detail', compact('bookingKamar', 'bookingFasilitas', 'type', 'typeLabel'));
+}
+
+    
 /**
  * Admin: list all bookings.
  */

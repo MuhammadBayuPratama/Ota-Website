@@ -36,10 +36,10 @@
                     <li class="p-4 border rounded bg-white shadow-sm hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200">
                         <div class="flex justify-between items-center flex-wrap gap-3">
                             <div>
-                                <strong class="text-lg">{{ $b->kamar->Name ?? '—' }}</strong>
+                                <strong class="text-lg">{{ $b->detail->name ?? 'Booking Kamar' }}</strong>
                                 <div class="text-sm text-gray-600 mt-1">
                                     User: {{ $b->user->Name }} <br>
-                                    Check-in: {{ $b->check_in }} — Check-out: {{ $b->check_out }} <br>
+                                    Check-in: {{    $b->check_in }} — Check-out: {{ $b->check_out }} <br>
                                     Durasi: {{ $b->durasi }} hari — Rp {{ number_format($b->total_harga,0,',','.') }}
                                 </div>
                             </div>
@@ -106,9 +106,9 @@
                     <li class="p-4 border rounded bg-white shadow-sm hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200">
                         <div class="flex justify-between items-center flex-wrap gap-3">
                             <div>
-                                <strong class="text-lg">{{ $b->fasilitas->name ?? '—' }}</strong>
+                                <strong class="text-lg">{{ $b->fasilitas->name ?? 'Booking Fasilitas' }}</strong>
                                 <div class="text-sm text-gray-600 mt-1">
-                                    User: {{ $b->user->name }} <br>
+                                    User: {{ $b->user->Name }} <br>
                                     Check-in: {{ $b->check_in }} — Check-out: {{ $b->check_out }} <br>
                                     Durasi: {{ $b->durasi }} hari — Rp {{ number_format($b->total_harga,0,',','.') }}
                                 </div>

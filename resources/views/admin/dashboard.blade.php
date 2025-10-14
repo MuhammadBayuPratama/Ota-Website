@@ -7,7 +7,7 @@
     <!-- Main content -->
     <div class="flex-1 flex flex-col">
         <!-- Content -->
-        <main class="p-6 flex-1 overflow">
+        <main class="p-6 flex-1 overflow mb-60">
             <div class="p-6">
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

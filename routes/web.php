@@ -37,6 +37,10 @@ Route::middleware(['auth', 'role:user'])->group(function () {
     Route::post('/booking/store', [BookingsController::class, 'store'])->name('booking.store');
     Route::post('/booking/storefasilitas', [BookingsController::class, 'storefasilitas'])->name('booking.storefasilitas');
     Route::get('/booking/history', [BookingsController::class, 'history'])->name('booking.history');
+    Route::get('/booking/detail/{type}/{id}', [BookingsController::class, 'showDetail'])
+        ->name('booking.show.detail') // Nama route yang lebih generik
+        ->where('type', 'kamar|fasilitas') // Opsional: Batasi hanya menerima 'kamar' atau 'fasilitas'
+        ->where('id', '[0-9]+'); // Batasi id hanya angka
 
     // Cancel Booking
     Route::post('/booking/cancel/{id}', [BookingsController::class, 'cancelBooking'])->name('booking.cancel');

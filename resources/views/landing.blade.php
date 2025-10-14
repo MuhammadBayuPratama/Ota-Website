@@ -117,19 +117,35 @@
             x-data="{ 
                 active: 0, 
                 total: {{ count($kamars) }},
+                itemsPerView: 1, // State baru untuk items yang terlihat
                 itemWidth: 0,
-                init() { 
-                    this.$nextTick(() => { 
-                        this.itemWidth = this.$refs.sliderContainer.clientWidth / this.calculateItemsPerView();
-                    });
-                    window.addEventListener('resize', () => {
-                         this.itemWidth = this.$refs.sliderContainer.clientWidth / this.calculateItemsPerView();
-                    });
-                },
                 calculateItemsPerView() {
                     if (window.innerWidth >= 1024) return 3;
                     if (window.innerWidth >= 768) return 2;
                     return 1;
+                },
+                updateDimensions() {
+                    // 1. Update itemsPerView
+                    this.itemsPerView = this.calculateItemsPerView();
+                    
+                    // 2. Hitung itemWidth yang baru
+                    // Jika sliderContainer belum dirender/tidak ada, gunakan fallback (misalnya 0)
+                    if (this.$refs.sliderContainer) {
+                        this.itemWidth = this.$refs.sliderContainer.clientWidth / this.itemsPerView;
+                    }
+
+                    // 3. Sesuaikan posisi aktif (active) jika melebihi batas baru (PENTING saat resize)
+                    const maxActive = Math.max(0, this.total - this.itemsPerView);
+                    this.active = Math.min(this.active, maxActive);
+                    this.active = Math.max(0, this.active);
+                },
+                init() { 
+                    this.$nextTick(() => { 
+                        this.updateDimensions();
+                    });
+                    window.addEventListener('resize', () => {
+                        this.updateDimensions();
+                    });
                 }
             }" 
             class="relative w-full overflow-hidden"
@@ -145,11 +161,12 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                     </svg>
                 </button>
+                
                 <button 
-                    @click="active = Math.min(total - calculateItemsPerView(), active + 1)" 
-                    :disabled="active >= total - calculateItemsPerView()"
+                    @click="active = Math.min(total - itemsPerView, active + 1)" 
+                    :disabled="active >= total - itemsPerView"
                     class="bg-white text-2xl rounded-full shadow-xl w-14 h-14 flex items-center justify-center transition-all duration-300 border-2 border-gray-200 group"
-                    :class="active >= total - calculateItemsPerView() ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white hover:border-transparent'"
+                    :class="active >= total - itemsPerView ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white hover:border-transparent'"
                 >
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -172,10 +189,10 @@
                         $availableCount = $kamar->jumlah - $activeDetailBookings;
                     @endphp
 
-                    <div class="room-card px-3 flex-shrink-0 min-w-full md:min-w-[50%] lg:min-w-[33.333%]" 
-                          data-status="{{ $isFull ? 'full' : 'available' }}"
-                          data-price="{{ $kamar->price }}"
-                          :style="`width: ${itemWidth}px;`">
+                    <div class="room-card px-3 flex-shrink-0" 
+                        data-status="{{ $isFull ? 'full' : 'available' }}"
+                        data-price="{{ $kamar->price }}"
+                        :style="`width: ${itemWidth}px;`">
                         <div class="rounded-xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 overflow-hidden bg-white h-full flex flex-col border border-gray-100">
                             
                             <div class="relative overflow-hidden group">
@@ -240,14 +257,14 @@
                                             </button>
                                         @else
                                             <a href="{{ route('booking.create', ['kamar_id' => $kamar->id]) }}" 
-                                               class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg text-center hover:shadow-lg transition-all duration-300 font-bold hover:scale-[1.01] flex items-center justify-center gap-2">
+                                                class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg text-center hover:shadow-lg transition-all duration-300 font-bold hover:scale-[1.01] flex items-center justify-center gap-2">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                 Booking Sekarang
                                             </a>
                                         @endif
                                     @else
                                         <a href="{{ route('login') }}" 
-                                           class="block w-full bg-gradient-to-r from-gray-600 to-gray-700 text-white py-3 rounded-lg text-center hover:from-gray-700 hover:to-gray-800 font-bold transition-all duration-300 flex items-center justify-center gap-2">
+                                            class="block w-full bg-gradient-to-r from-gray-600 to-gray-700 text-white py-3 rounded-lg text-center hover:from-gray-700 hover:to-gray-800 font-bold transition-all duration-300 flex items-center justify-center gap-2">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
                                             Login untuk Booking
                                         </a>
@@ -255,12 +272,12 @@
                                 </div>
                             </div>
                         </div>
-                        </div>
+                    </div>
                 @endforeach
             </div>
 
             <div class="flex justify-center space-x-3 mt-8">
-                <template x-for="(kamar, index) in Array.from({ length: total - calculateItemsPerView() + 1 }, (_, i) => i)" :key="index">
+                <template x-for="(kamar, index) in Array.from({ length: total - itemsPerView + 1 }, (_, i) => i)" :key="index">
                     <button 
                         class="w-3 h-3 rounded-full transition-all duration-300 hover:scale-125"
                         :class="active === index ? 'bg-gradient-to-r from-blue-600 to-purple-600 w-8' : 'bg-gray-300'"
@@ -702,7 +719,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <h4 class="font-bold text-lg mb-4">Quick Links</h4>
                 <ul class="space-y-2">
                     <li><a href="#home" class="text-gray-400 hover:text-white transition-colors">Home</a></li>
-                    <li><a href="#rooms-section" class="text-gray-400 hover:text-white transition-colors">Rooms</a></li>
+                    <li><a href="#rooms" class="text-gray-400 hover:text-white transition-colors">Rooms</a></li>
                     <li><a href="#facilities" class="text-gray-400 hover:text-white transition-colors">Facilities</a></li>
                     <li><a href="#about" class="text-gray-400 hover:text-white transition-colors">About Us</a></li>
                 </ul>

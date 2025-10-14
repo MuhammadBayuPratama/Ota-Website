@@ -3,6 +3,7 @@
 @section('title', 'Edit Kamar')
 
 @section('content')
+<div class="ml-60">
 <h2 class="text-2xl font-bold mb-4">Edit Kamar</h2>
 <form action="{{ route('admin.kamar.update', $kamar->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
@@ -49,4 +50,5 @@
 
     <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Update</button>
 </form>
+</div>
 @endsection

@@ -32,4 +32,5 @@ class detail_fasilitas extends Model
     {
         return $this->belongsTo(Fasilitas::class, 'fasilitas_id');
     }
+
 }

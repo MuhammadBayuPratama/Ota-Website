@@ -18,7 +18,6 @@ class BookingFasilitas extends Model
         'Email',
         'Phone',
         'arrival_time',
-        'fasilitas_id',
         'check_in',
         'check_out',
         'durasi',
