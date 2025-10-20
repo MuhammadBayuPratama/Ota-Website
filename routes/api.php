@@ -9,7 +9,13 @@ use App\Http\Controllers\VendorAuthController; // <<< Import Controller Vendor
 use App\Http\Controllers\FasilitasController;
 use App\Http\Controllers\BookingsController;
 use App\Http\Controllers\AddonController;
+<<<<<<< Updated upstream
 
+=======
+use App\Http\Controllers\ProvinceController;
+use App\Http\Controllers\CityController;
+use App\Http\Controllers\ProductController;
+>>>>>>> Stashed changes
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -74,6 +80,7 @@ Route::get('/bookings', [BookingsController::class, 'index']); // Sebaiknya di d
 
 // Route Booking yang memerlukan otentikasi
 Route::prefix('booking')->middleware('auth:sanctum')->group(function () {
+<<<<<<< Updated upstream
     // Route ini sebaiknya menjadi PUT/PATCH jika melakukan perubahan status
     route::post('/checkout/{id}', [BookingsController::class, 'checkout'])->name('booking.checkout'); 
     route::post('/checkin/{id}', [BookingsController::class, 'checkin'])->name('booking.checkin');
@@ -81,4 +88,15 @@ Route::prefix('booking')->middleware('auth:sanctum')->group(function () {
     route::post('/store', [BookingsController::class, 'store'])->name('booking.store');
     Route::post('/{id}/cancel', [BookingsController::class, 'cancelBooking']);
     Route::post('/fasilitas', [BookingsController::class, 'storefasilitas']); // Nama yang ambigu, lebih baik '/add-fasilitas' atau semacamnya
+=======
+route::post('/store', [bookingsController::class, 'store'])->name('booking.store');
+Route::post('/{id}/cancel', [BookingsController::class, 'cancelBooking']);
+Route::post('/fasilitas', [BookingsController::class, 'storefasilitas']);
+
+>>>>>>> Stashed changes
 });
+
+// Province, City, Product API Routes
+Route::apiResource('provinces', ProvinceController::class);
+Route::apiResource('cities', CityController::class);
+Route::apiResource('products', ProductController::class);

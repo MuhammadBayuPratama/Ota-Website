@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AddonController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\ProvinceController;
+use App\Http\Controllers\CityController;
+use App\Http\Controllers\ProductController;
 
 
 
@@ -55,6 +58,9 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     Route::resource('kamar', KamarController::class);
     Route::resource('fasilitas', FasilitasController::class);
     Route::resource('category', CategoryController::class);
+    Route::resource('province', ProvinceController::class);
+    Route::resource('city', CityController::class);
+    Route::resource('product', ProductController::class);
 
     // Admin booking index
     Route::get('/booking', [BookingsController::class, 'adminIndex'])->name('booking.index');
