@@ -65,10 +65,11 @@ return [
             'model' => App\Models\User::class,
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        // Tambahkan provider 'vendors' di sini:
+        'vendors' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Vendor::class, // Merujuk ke Model Vendor yang menggunakan UUID
+        ],
     ],
 
     /*

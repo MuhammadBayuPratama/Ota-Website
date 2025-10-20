@@ -9,11 +9,15 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+public function up(): void
     {
         Schema::create('personal_access_tokens', function (Blueprint $table) {
             $table->id();
-            $table->morphs('tokenable');
+            // 🛑 CHANGE THIS LINE: 
+            // Use uuidMorphs() to handle UUID primary keys on the 'tokenable' model (your User model).
+            $table->uuidMorphs('tokenable'); 
+            // BEFORE: $table->morphs('tokenable'); 
+            
             $table->string('name');
             $table->string('token', 64)->unique();
             $table->text('abilities')->nullable();
