@@ -23,6 +23,14 @@
     // Formatting tanggal
     $checkIn = \Carbon\Carbon::parse($activeBooking->check_in ?? now());
     $checkOut = \Carbon\Carbon::parse($activeBooking->check_out ?? now());
+
+    // Hitung total harga Add-on
+    $totalAddon = 0;
+    if ($activeBooking && isset($activeBooking->addons)) {
+        foreach ($activeBooking->addons as $addon) {
+            $totalAddon += ($addon->price ?? 0) * ($addon->quantity ?? 0);
+        }
+    }
 @endphp
 
 @section('title', 'Detail Booking ' . $typeLabel)
@@ -82,6 +90,24 @@
             </div>
         </div>
         
+            {{-- BAGIAN BARU: SPECIAL REQUEST (Perbaikan agar selalu tampil) --}}
+        @php
+            // Cek apakah ada request. Gunakan '??' untuk memberikan string kosong jika properti null.
+            $requestText = $activeBooking->Special_Request ?? '';
+            // Tentukan teks yang akan ditampilkan jika permintaan kosong
+            $displayText = !empty($requestText) ? $requestText : '— Tidak ada permintaan khusus dicatat. —';
+        @endphp
+
+        <div class="bg-white shadow-xl rounded-2xl p-6 md:p-8 mb-12 border-l-4 border-yellow-500">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                Permintaan Khusus <span class="text-2xl ml-3">⭐</span>
+            </h2>
+            <p class="text-gray-700 leading-relaxed {{ empty($requestText) ? 'italic text-gray-400' : 'italic' }}">
+                {{ $displayText }}
+            </p>
+        </div>
+        {{-- END SPECIAL REQUEST --}}
+
         {{-- KONTEN DETAIL SPESIFIK BERDASARKAN TIPE BOOKING --}}
         
         @if ($type === 'kamar' && $bookingKamar)
@@ -150,6 +176,46 @@
                 @endforeach
             </div>
 
+            {{-- Bagian Add-on setelah Detail Kamar --}}
+            @if(isset($activeBooking->addons) && $activeBooking->addons->isNotEmpty())
+                <hr class="my-8 border-gray-200">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6 flex items-center">
+                    Tambahan (Add-ons) 🛍️
+                </h2>
+                
+                @php
+                    $currentTotalAddon = 0; // Inisialisasi ulang perhitungan total add-on di sini
+                @endphp
+
+                <div class="bg-gray-50 p-6 rounded-xl shadow-inner space-y-4">
+                    @foreach($activeBooking->addons as $addon)
+                        @php
+                            // Mengambil Harga & Kuantitas. Sesuaikan properti ini jika struktur data Anda berbeda.
+                            $addonPrice = $addon->price ?? ($addon->item->price ?? 0); // Coba properti 'price' atau relasi 'item->price'
+                            $addonQuantity = $addon->quantity ?? 1;
+
+                            $subtotalAddon = $addonPrice * $addonQuantity;
+                            $currentTotalAddon += $subtotalAddon; // Tambahkan ke total
+                        @endphp
+                        <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                            <div class="flex-grow">
+                                {{-- Pastikan nama add-on benar. Gunakan 'name' atau 'item->name' --}}
+                                <p class="text-lg font-semibold text-gray-800">{{ $addon->name ?? ($addon->item->name ?? 'Add-on Dihapus') }}</p> 
+                                <p class="text-sm text-gray-500">
+                                    {{ $addonQuantity }} x Rp {{ number_format($addonPrice, 0, ',', '.') }}
+                                </p>
+                            </div>
+                            <p class="text-lg font-bold text-gray-900">Rp {{ number_format($subtotalAddon, 0, ',', '.') }}</p> 
+                        </div>
+                    @endforeach
+                    <div class="flex justify-between items-center pt-4 border-t-2 border-gray-300">
+                        <p class="text-xl font-bold text-gray-900 uppercase">Total Add-ons</p>
+                        <p class="text-3xl font-black text-red-600">Rp {{ number_format($currentTotalAddon, 0, ',', '.') }}</p>
+                    </div>
+                </div>
+            @endif
+            {{-- Akhir Bagian Add-on --}}
+
             {{-- TOTAL AKHIR SEBAGAI BOX TERPISAH --}}
             <div class="mt-8 p-6 bg-gray-900 rounded-xl shadow-2xl text-white flex justify-between items-center">
                 <p class="text-2xl font-extrabold uppercase">TOTAL AKHIR DIBAYAR</p>
@@ -158,81 +224,126 @@
 
         @elseif ($type === 'fasilitas' && $bookingFasilitas)
             
-            {{-- AMBIL DATA FASILITAS --}}
-            @php
-                $detailFasilitas = $bookingFasilitas->detailFasilitas->first();
-                $fasilitas = $detailFasilitas->fasilitas ?? null; 
-                
-                $price = $fasilitas->price ?? 0;
-                $durasi = $bookingFasilitas->durasi ?? 0;
-                $subtotal = $price * $durasi;
-            @endphp
-
             <h2 class="text-3xl font-bold text-gray-900 mb-6">Detail Fasilitas</h2>
 
-            @if ($fasilitas)
-                {{-- CARD DETAIL FASILITAS (Gaya Dashboard Admin) --}}
-                <div class="flex flex-col md:flex-row bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-                    
-                    {{-- GAMBAR --}}
-                    <div class="flex-shrink-0 w-full md:w-64 h-48 overflow-hidden rounded-xl mb-6 md:mb-0">
-                        <img class="w-full h-full object-cover" src="{{ asset($fasilitas->image ?? 'images/default-facility.jpg') }}" alt="{{ $fasilitas->name }}">
-                    </div>
-                    
-                    {{-- DETAIL & HARGA --}}
-                    <div class="md:ml-8 flex-grow">
+            {{-- 💡 PERBAIKAN: Menggunakan @foreach untuk menampilkan semua fasilitas yang dibooking --}}
+            <div class="space-y-6">
+                @forelse($bookingFasilitas->detailFasilitas as $detailFasilitas)
+                    @php
+                        $fasilitas = $detailFasilitas->fasilitas ?? null; 
                         
-                        {{-- Nama Fasilitas (Header) --}}
-                        <div class="border-b pb-2 mb-4">
-                            <h3 class="text-3xl font-extrabold text-gray-900">{{ $fasilitas->name }}</h3>
+                        // Hitungan Subtotal
+                        $price = $fasilitas->price ?? 0;
+                        $durasi = $bookingFasilitas->durasi ?? 0;
+                        $subtotal = $price * $durasi;
+
+                        if (!$fasilitas) {
+                            continue; // Lewati jika fasilitasnya null
+                        }
+                    @endphp
+
+                    {{-- CARD DETAIL FASILITAS (Gaya Dashboard Admin) --}}
+                    <div class="flex flex-col md:flex-row bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                        
+                        {{-- GAMBAR --}}
+                        <div class="flex-shrink-0 w-full md:w-64 h-48 overflow-hidden rounded-xl mb-6 md:mb-0">
+                            <img class="w-full h-full object-cover" src="{{ asset($fasilitas->image ?? 'images/default-facility.jpg') }}" alt="{{ $fasilitas->name }}">
                         </div>
-
-                        <dl class="divide-y divide-gray-100">
-                            {{-- Dibooking oleh --}}
-                            <div class="flex justify-between py-3">
-                                <dt class="text-sm font-medium text-gray-500">Dibooking oleh</dt>
-                                <dd class="text-sm font-semibold text-gray-900">{{ $detailFasilitas->Nama_Tamu ?? 'N/A' }}</dd>
-                            </div>
-
-                            {{-- Harga Satuan --}}
-                            <div class="flex justify-between py-3">
-                                <dt class="text-sm font-medium text-gray-500">Harga Satuan / Hari</dt>
-                                <dd class="text-sm font-semibold text-green-600">Rp {{ number_format($price, 0, ',', '.') }}</dd>
-                            </div>
-
-                            {{-- Durasi --}}
-                            <div class="flex justify-between py-3">
-                                <dt class="text-sm font-medium text-gray-500">Durasi Booking</dt>
-                                <dd class="text-sm font-semibold text-gray-900">{{ $durasi }} Hari</dd>
-                            </div>
+                        
+                        {{-- DETAIL & HARGA --}}
+                        <div class="md:ml-8 flex-grow">
                             
-                            {{-- Subtotal --}}
-                            <div class="flex justify-between py-4 border-t border-blue-200 mt-2 bg-blue-50 rounded-b-lg px-2 -mx-2">
-                                <dt class="text-md font-bold text-blue-700">SUBTOTAL</dt>
-                                <dd class="text-3xl font-extrabold text-blue-700">Rp {{ number_format($subtotal, 0, ',', '.') }}</dd>
+                            {{-- Nama Fasilitas (Header) --}}
+                            <div class="border-b pb-2 mb-4">
+                                <h3 class="text-3xl font-extrabold text-gray-900">{{ $fasilitas->name }}</h3>
                             </div>
-                        </dl>
-                    </div>
-                </div>
 
-                {{-- TOTAL AKHIR SEBAGAI BOX TERPISAH --}}
-                <div class="mt-8 p-6 bg-gray-900 rounded-xl shadow-2xl text-white flex justify-between items-center">
-                    <p class="text-2xl font-extrabold uppercase">TOTAL AKHIR DIBAYAR</p>
-                    <p class="text-4xl font-black text-yellow-400">Rp {{ number_format($bookingFasilitas->total_harga, 0, ',', '.') }}</p>
-                </div>
+                            <dl class="divide-y divide-gray-100">
+                                {{-- Dibooking oleh --}}
+                                <div class="flex justify-between py-3">
+                                    <dt class="text-sm font-medium text-gray-500">Dibooking oleh</dt>
+                                    <dd class="text-sm font-semibold text-gray-900">{{ $detailFasilitas->Nama_Tamu ?? 'N/A' }}</dd>
+                                </div>
+
+                                {{-- Harga Satuan --}}
+                                <div class="flex justify-between py-3">
+                                    <dt class="text-sm font-medium text-gray-500">Harga Satuan / Hari</dt>
+                                    <dd class="text-sm font-semibold text-green-600">Rp {{ number_format($price, 0, ',', '.') }}</dd>
+                                </div>
+
+                                {{-- Durasi --}}
+                                <div class="flex justify-between py-3">
+                                    <dt class="text-sm font-medium text-gray-500">Durasi Booking</dt>
+                                    <dd class="text-sm font-semibold text-gray-900">{{ $durasi }} Hari</dd>
+                                </div>
+                                
+                                {{-- Subtotal --}}
+                                <div class="flex justify-between py-4 border-t border-blue-200 mt-2 bg-blue-50 rounded-b-lg px-2 -mx-2">
+                                    <dt class="text-md font-bold text-blue-700">SUBTOTAL</dt>
+                                    <dd class="text-3xl font-extrabold text-blue-700">Rp {{ number_format($subtotal, 0, ',', '.') }}</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+                @empty
+                    <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-md" role="alert">
+                        <p class="font-bold">Kesalahan Data Fasilitas</p>
+                        <p class="text-sm">Tidak ada detail fasilitas yang ditemukan untuk transaksi ini.</p>
+                    </div>
+                @endforelse
+            </div>
+            
+            {{-- Bagian Add-on setelah Detail Fasilitas --}}
+            @if(isset($activeBooking->addons) && $activeBooking->addons->isNotEmpty())
+                <hr class="my-8 border-gray-200">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6 flex items-center">
+                    Tambahan (Add-ons) 🛍️
+                </h2>
                 
-            @else
-                <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-md" role="alert">
-                    <p class="font-bold">Kesalahan Data Fasilitas</p>
-                    <p class="text-sm">Fasilitas yang dibooking tidak ditemukan.</p>
+                @php
+                    $currentTotalAddon = 0; // Inisialisasi ulang perhitungan total add-on di sini
+                @endphp
+
+                <div class="bg-gray-50 p-6 rounded-xl shadow-inner space-y-4">
+                    @foreach($activeBooking->addons as $addon)
+                        @php
+                            // Mengambil Harga & Kuantitas. Sesuaikan properti ini jika struktur data Anda berbeda.
+                            $addonPrice = $addon->price ?? ($addon->item->price ?? 0); // Coba properti 'price' atau relasi 'item->price'
+                            $addonQuantity = $addon->quantity ?? 1;
+
+                            $subtotalAddon = $addonPrice * $addonQuantity;
+                            $currentTotalAddon += $subtotalAddon; // Tambahkan ke total
+                        @endphp
+                        <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                            <div class="flex-grow">
+                                {{-- Pastikan nama add-on benar. Gunakan 'name' atau 'item->name' --}}
+                                <p class="text-lg font-semibold text-gray-800">{{ $addon->name ?? ($addon->item->name ?? 'Add-on Dihapus') }}</p> 
+                                <p class="text-sm text-gray-500">
+                                    {{ $addonQuantity }} x Rp {{ number_format($addonPrice, 0, ',', '.') }}
+                                </p>
+                            </div>
+                            <p class="text-lg font-bold text-gray-900">Rp {{ number_format($subtotalAddon, 0, ',', '.') }}</p> 
+                        </div>
+                    @endforeach
+                    <div class="flex justify-between items-center pt-4 border-t-2 border-gray-300">
+                        <p class="text-xl font-bold text-gray-900 uppercase">Total Add-ons</p>
+                        <p class="text-3xl font-black text-red-600">Rp {{ number_format($currentTotalAddon, 0, ',', '.') }}</p>
+                    </div>
                 </div>
             @endif
+            {{-- Akhir Bagian Add-on --}}
+
+            {{-- TOTAL AKHIR SEBAGAI BOX TERPISAH --}}
+            <div class="mt-8 p-6 bg-gray-900 rounded-xl shadow-2xl text-white flex justify-between items-center">
+                <p class="text-2xl font-extrabold uppercase">TOTAL AKHIR DIBAYAR</p>
+                <p class="text-4xl font-black text-yellow-400">Rp {{ number_format($bookingFasilitas->total_harga, 0, ',', '.') }}</p>
+            </div>
             
         @else
-             <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-md" role="alert">
-                 <p class="font-bold">Error!</p>
-                 <p class="text-sm">Data booking untuk tipe '{{ $typeLabel }}' tidak ditemukan atau tidak valid.</p>
-             </div>
+            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-md" role="alert">
+                <p class="font-bold">Error!</p>
+                <p class="text-sm">Data booking untuk tipe '{{ $typeLabel }}' tidak ditemukan atau tidak valid.</p>
+            </div>
         @endif
     @else
         <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-md" role="alert">

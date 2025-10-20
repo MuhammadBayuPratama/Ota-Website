@@ -11,16 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-      Schema::create('fasilitas', function (Blueprint $table) {
-    $table->id();
+      Schema::create('products', function (Blueprint $table) {
+    $table->uuid('id')->primary();
     $table->string('name');
     $table->string('image');
     $table->string('description');
     $table->integer('price');
-    $table->unsignedBigInteger('id_category');
+    $table->uuid('id_category');
     $table->foreign('id_category')
           ->references('id')
           ->on('categories')
+          ->onDelete('cascade');
+    $table->uuid('id_vendor');
+    $table->foreign('id_vendor')
+          ->references('id')
+          ->on('vendor')
           ->onDelete('cascade');
     $table->integer('jumlah'); // jumlah unit kamar tersedia
     $table->integer('max_adults')->default(2); // kapasitas dewasa
@@ -36,6 +41,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fasilitas');
+        Schema::dropIfExists('products');
     }
 };

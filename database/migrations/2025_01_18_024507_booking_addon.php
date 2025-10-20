@@ -12,10 +12,10 @@ return new class extends Migration
     {
         Schema::create('booking_addon', function (Blueprint $table) {
             // Kolom ID untuk Primary Key (Opsional, tapi praktik yang baik)
-            $table->id(); 
+            $table->uuid('id')->primary(); 
 
             // Foreign Key ke tabel 'bookings'
-            $table->foreignId('booking_id')
+            $table->uuid('booking_id')
                   ->constrained('bookings')
                   ->onDelete('cascade');
 
