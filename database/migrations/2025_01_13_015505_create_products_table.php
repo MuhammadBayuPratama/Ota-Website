@@ -11,29 +11,42 @@ return new class extends Migration
      */
     public function up(): void
     {
-      Schema::create('products', function (Blueprint $table) {
-    $table->uuid('id')->primary();
-    $table->string('name');
-    $table->string('image');
-    $table->string('description');
-    $table->integer('price');
-    $table->uuid('id_category');
-    $table->foreign('id_category')
-          ->references('id')
-          ->on('categories')
-          ->onDelete('cascade');
-    $table->uuid('id_vendor');
-    $table->foreign('id_vendor')
-          ->references('id')
-          ->on('vendor')
-          ->onDelete('cascade');
-    $table->integer('jumlah'); // jumlah unit kamar tersedia
-    $table->integer('max_adults')->default(2); // kapasitas dewasa
-    $table->integer('max_children')->default(1); // kapasitas anak
-    $table->string('status')->nullable();
-    $table->timestamps();
-});
+        Schema::create('products', function (Blueprint $table) {
+            // Kolom Primary Key (UUID)
+            $table->uuid('id')->primary();
 
+            // Kolom Data Utama
+            $table->string('name', 255);
+            $table->string('image')->nullable();       // Path/URL gambar, boleh kosong
+            $table->text('description');               // Menggunakan 'text' untuk deskripsi panjang
+
+            // Kolom Harga
+            $table->decimal('price', 10, 2);           // Menggunakan 'decimal' untuk harga (disarankan daripada 'integer')
+
+            // Kolom Kunci Asing (Foreign Keys) - Menggunakan foreignUuid() untuk sintaks yang lebih rapi
+            
+            // id_category
+            $table->foreignUuid('id_category')
+                  ->constrained('categories')        // Asumsi nama tabel 'categories'
+                  ->onDelete('cascade');
+            
+            // id_vendor
+            $table->foreignUuid('id_vendor')
+                  ->constrained('vendor')           // Menggunakan 'vendors' (plural) untuk mengikuti konvensi Laravel. Sesuaikan jika nama tabel Anda adalah 'vendor' (singular).
+                  ->onDelete('cascade');
+            
+            // Kolom Inventaris/Kapasitas (Jika produk adalah kamar/unit)
+            $table->integer('jumlah')->unsigned();     // Jumlah unit/stok yang tersedia
+            $table->integer('max_adults')->default(2); // Kapasitas dewasa
+            $table->integer('max_children')->default(1); // Kapasitas anak
+            
+            // Kolom Status
+            $table->enum('status', ['available', 'unavailable', 'draft'])->default('available');
+            
+            // Kolom timestamps dan Soft Deletes (disarankan)
+            $table->timestamps();
+            $table->softDeletes();
+        });
     }
 
     /**

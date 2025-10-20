@@ -11,14 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('city', function (Blueprint $table) {
+        // Menggunakan 'cities' (plural) sesuai konvensi Laravel
+        Schema::create('city', function (Blueprint $table) { 
+            
+            // Kolom Primary Key (UUID)
             $table->uuid('id')->primary();
-            $table->uuid('id_province');
-            $table->foreign('id_province')
-            ->references('id')
-            ->on('province')
-            ->onDelete('cascade');                 
-            $table->string('name');
+
+            // Kolom Foreign Key (Menggunakan helper foreignUuid() yang lebih ringkas)
+            // Asumsi: Nama tabel provinsi adalah 'provinces' (plural).
+            $table->foreignUuid('id_province')
+                  ->constrained('province') // Menggantikan references()->on()
+                  ->onDelete('cascade');
+                  
+            // Kolom Data
+            $table->string('name', 100);
+            
+            // Kolom timestamps
             $table->timestamps();
         });
     }
@@ -28,6 +36,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Menggunakan 'cities'
         Schema::dropIfExists('city');
     }
 };

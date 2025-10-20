@@ -12,12 +12,31 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('addons', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->integer('price');
-            // PERUBAHAN DI SINI: tambahkan ->nullable()
-            $table->string('description')->nullable(); 
+            // Kolom Primary Key (UUID)
+            $table->uuid('id')->primary();
+
+            // Kolom Foreign Key (UUID) - DISIMPLIFIKASI
+            // Menggunakan constrained() untuk sintaks yang lebih rapi
+            $table->foreignUuid('id_vendor')
+                  ->nullable()                  // <<< HARUS NULLABLE untuk ON DELETE SET NULL
+                  ->constrained('vendor')      // MENGGANTIKAN references('id')->on('vendor')
+                  ->onDelete('set null');       // Aturan penghapusan
+
+            // Kolom Data
+            $table->string('addons', 255);      // Nama addon
+            $table->string('desc', 500)->nullable(); // Deskripsi
+            $table->string('status', 50)->default('available'); // Status
+            $table->decimal('price', 10, 2);    // Harga
+            $table->boolean('publish')->default(false); // Status publikasi
+            
+            // Kolom tambahan
+            $table->string('image_url')->nullable(); 
+
+            // Kolom timestamps
             $table->timestamps();
+
+            // Soft Deletes
+            $table->softDeletes();
         });
     }
 

@@ -11,23 +11,24 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('booking_addon', function (Blueprint $table) {
-            // Kolom ID untuk Primary Key (Opsional, tapi praktik yang baik)
+            
+            // Kolom Primary Key (UUID)
             $table->uuid('id')->primary(); 
 
-            // Foreign Key ke tabel 'bookings'
-            $table->uuid('booking_id')
-                  ->constrained('bookings')
+            // Foreign Key ke tabel 'bookings' - PERBAIKAN: Gunakan foreignUuid()
+            $table->foreignUuid('booking_id')
+                  ->constrained('bookings') // Asumsi tabel 'bookings' menggunakan UUID
                   ->onDelete('cascade');
 
-            // Foreign Key ke tabel 'addons'
-            $table->foreignId('addon_id')
+            // Foreign Key ke tabel 'addons' - PERBAIKAN: Gunakan foreignUuid()
+            $table->foreignUuid('addon_id') // Kolom 'addon_id' harus UUID agar kompatibel dengan 'addons.id'
                   ->constrained('addons')
                   ->onDelete('cascade');
             
-            // Kolom Tambahan (Opsional): Misalnya, jika addon bisa dipesan lebih dari satu
+            // Kolom Tambahan
             $table->integer('quantity')->default(1); 
 
-            // Membuat kedua kunci menjadi unik (sebuah booking hanya bisa memiliki satu baris untuk addon tertentu)
+            // Membuat kedua kunci menjadi unik
             $table->unique(['booking_id', 'addon_id']);
 
             // Timestamps
